@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import AppKit
 
 @main
 struct MousePointerApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+        // Background-only app — no visible windows
+        Settings { EmptyView() }
     }
 }
