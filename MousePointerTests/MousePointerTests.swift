@@ -1,37 +1,67 @@
-//
-//  MousePointerTests.swift
-//  MousePointerTests
-//
-//  Created by MAKINO Takashi on 2026/05/18.
-//
-
 import XCTest
+@testable import MousePointer
 
-final class MousePointerTests: XCTestCase {
+final class ShakeDetectorTests: XCTestCase {
+    private var detector: ShakeDetector!
+    private var detectedCount = 0
+    private var endedCount = 0
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    override func setUp() {
+        super.setUp()
+        detector = ShakeDetector()
+        detectedCount = 0
+        endedCount = 0
+        detector.onShakeDetected = { [weak self] in self?.detectedCount += 1 }
+        detector.onShakeEnded   = { [weak self] in self?.endedCount   += 1 }
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
-        // XCTest Documentation
-        // https://developer.apple.com/documentation/xctest
-    }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        measure {
-            // Put the code you want to measure the time of here.
+    // Steady rightward movement — no reversals, no shake
+    func testNoShakeOnSteadyMovement() {
+        for i in 0..<20 {
+            detector.update(point: CGPoint(x: Double(i) * 10, y: 0),
+                            timestamp: Double(i) * 0.02)
         }
+        XCTAssertEqual(detectedCount, 0)
     }
 
+    // 4 reversals of 50pt each within 0.25s → shake fires once
+    func testShakeDetectedOnSufficientReversals() {
+        let xs: [CGFloat] = [0, 50, 0, 50, 0, 50]
+        for (i, x) in xs.enumerated() {
+            detector.update(point: CGPoint(x: x, y: 0),
+                            timestamp: Double(i) * 0.05)
+        }
+        XCTAssertEqual(detectedCount, 1)
+    }
+
+    // Reversals of 20pt — below 30pt minDistance threshold, no shake
+    func testNoShakeBelowMinDistance() {
+        let xs: [CGFloat] = [0, 20, 0, 20, 0, 20]
+        for (i, x) in xs.enumerated() {
+            detector.update(point: CGPoint(x: x, y: 0),
+                            timestamp: Double(i) * 0.05)
+        }
+        XCTAssertEqual(detectedCount, 0)
+    }
+
+    // Continuous shaking must fire onShakeDetected exactly once
+    func testShakeNotFiredTwiceWhileContinuous() {
+        let xs: [CGFloat] = [0, 50, 0, 50, 0, 50, 0, 50, 0, 50]
+        for (i, x) in xs.enumerated() {
+            detector.update(point: CGPoint(x: x, y: 0),
+                            timestamp: Double(i) * 0.05)
+        }
+        XCTAssertEqual(detectedCount, 1)
+    }
+
+    // 3 reversals spread 0.3s apart — window is 0.5s, only 2 points fit → no shake
+    func testNoShakeWhenReversalsOutsideWindow() {
+        let events: [(CGFloat, TimeInterval)] = [
+            (0, 0.0), (50, 0.3), (0, 0.6), (50, 0.9), (0, 1.2)
+        ]
+        for (x, t) in events {
+            detector.update(point: CGPoint(x: x, y: 0), timestamp: t)
+        }
+        XCTAssertEqual(detectedCount, 0)
+    }
 }
