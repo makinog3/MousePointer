@@ -54,7 +54,7 @@ final class ShakeDetectorTests: XCTestCase {
         XCTAssertEqual(detectedCount, 1)
     }
 
-    // 3 reversals spread 0.3s apart — window is 0.5s, only 2 points fit → no shake
+    // 5 events at 0.3s intervals — at any timestamp, ≤2 points fall within the 0.5s window → no shake
     func testNoShakeWhenReversalsOutsideWindow() {
         let events: [(CGFloat, TimeInterval)] = [
             (0, 0.0), (50, 0.3), (0, 0.6), (50, 0.9), (0, 1.2)
@@ -63,5 +63,16 @@ final class ShakeDetectorTests: XCTestCase {
             detector.update(point: CGPoint(x: x, y: 0), timestamp: t)
         }
         XCTAssertEqual(detectedCount, 0)
+    }
+
+    func testShakeEndedFiredAfterCooldown() {
+        let exp = expectation(description: "shakeEnded fires")
+        detector.onShakeEnded = { exp.fulfill() }
+
+        let xs: [CGFloat] = [0, 50, 0, 50, 0, 50]
+        for (i, x) in xs.enumerated() {
+            detector.update(point: CGPoint(x: x, y: 0), timestamp: Double(i) * 0.05)
+        }
+        wait(for: [exp], timeout: ShakeDetector.cooldownDuration + 0.5)
     }
 }

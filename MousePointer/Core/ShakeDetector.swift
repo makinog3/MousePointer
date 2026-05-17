@@ -29,7 +29,6 @@ final class ShakeDetector {
 
         guard detectShake(at: timestamp) else { return }
 
-        pendingEnd?.cancel()
         if !isShaking {
             isShaking = true
             onShakeDetected?()
