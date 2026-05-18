@@ -10,7 +10,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showAccessibilityAlert()
             return
         }
-        NSApp.setActivationPolicy(.prohibited)
         start()
     }
 
