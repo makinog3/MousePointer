@@ -1,7 +1,17 @@
 import AppKit
 
 final class EffectHostView: NSView {
-    // AppKit default: y=0 at bottom — matches CALayer coordinate space
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        wantsLayer = true
+    }
+
+    // y=0 at bottom — matches CALayer coordinate space
     override var isFlipped: Bool { false }
 
     override func makeBackingLayer() -> CALayer {
