@@ -55,16 +55,14 @@ final class ShakeEffectRenderer {
 
     func stopShake() {
         for ring in [innerRing, outerRing] {
-            ring.removeAnimation(forKey: "pulse")
             let currentOpacity = ring.presentation()?.opacity ?? ring.opacity
+            ring.removeAllAnimations()
             ring.opacity = 0
 
             let fade = CABasicAnimation(keyPath: "opacity")
-            fade.fromValue             = currentOpacity
-            fade.toValue               = Float(0)
-            fade.duration              = 1.0
-            fade.fillMode              = .forwards
-            fade.isRemovedOnCompletion = false
+            fade.fromValue = currentOpacity
+            fade.toValue   = Float(0)
+            fade.duration  = 1.0
             ring.add(fade, forKey: "fadeOut")
         }
     }
