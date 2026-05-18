@@ -19,12 +19,12 @@ final class OverlayWindowController {
     // MARK: - Public event API
 
     func updateCursorPosition(_ quartzPoint: CGPoint) {
-        let (screen, local) = resolve(quartzPoint)
+        guard let (screen, local) = resolve(quartzPoint) else { return }
         shakeRenderers[ObjectIdentifier(screen)]?.moveTo(local)
     }
 
     func triggerClick(at quartzPoint: CGPoint) {
-        let (screen, local) = resolve(quartzPoint)
+        guard let (screen, local) = resolve(quartzPoint) else { return }
         clickRenderers[ObjectIdentifier(screen)]?.fire(at: local)
     }
 
@@ -64,13 +64,16 @@ final class OverlayWindowController {
     // Conversion: appkitY = primaryScreenHeight - quartzY
 
     private func quartzToAppKit(_ p: CGPoint) -> CGPoint {
-        let h = NSScreen.screens.first?.frame.height ?? 0
-        return CGPoint(x: p.x, y: h - p.y)
+        // Primary screen is the one whose AppKit frame origin is (0,0)
+        let primary = NSScreen.screens.first { $0.frame.origin == .zero }
+                      ?? NSScreen.screens[0]
+        return CGPoint(x: p.x, y: primary.frame.height - p.y)
     }
 
-    private func resolve(_ quartzPoint: CGPoint) -> (NSScreen, CGPoint) {
+    private func resolve(_ quartzPoint: CGPoint) -> (NSScreen, CGPoint)? {
+        guard let fallback = NSScreen.screens.first else { return nil }
         let ap = quartzToAppKit(quartzPoint)
-        let screen = NSScreen.screens.first { $0.frame.contains(ap) } ?? NSScreen.main!
+        let screen = NSScreen.screens.first { $0.frame.contains(ap) } ?? fallback
         let local  = CGPoint(x: ap.x - screen.frame.origin.x,
                              y: ap.y - screen.frame.origin.y)
         return (screen, local)
