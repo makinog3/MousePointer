@@ -5,6 +5,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var eventMonitor:     MouseEventMonitor?
     private var shakeDetector:    ShakeDetector?
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard AXIsProcessTrusted() else {
             showAccessibilityAlert()
