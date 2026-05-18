@@ -7,18 +7,15 @@ struct TimedPoint {
 }
 
 final class ShakeDetector {
-    // MARK: - Configuration constants
-    static let windowDuration: TimeInterval  = 0.5   // seconds of history to examine
-    static let requiredReversals              = 3     // min direction reversals
-    static let minDistance: CGFloat           = 30.0  // pt per reversal
-    static let cooldownDuration: TimeInterval = 0.6   // seconds before shakeEnded fires
-    private static let bufferCapacity         = 20
+    static let windowDuration: TimeInterval  = 0.5
+    static let requiredReversals             = 3
+    static let minDistance: CGFloat          = 30.0
+    static let cooldownDuration: TimeInterval = 0.6
+    private static let bufferCapacity        = 120
 
-    // MARK: - Callbacks
     var onShakeDetected: (() -> Void)?
     var onShakeEnded: (() -> Void)?
 
-    // MARK: - State
     private(set) var isShaking = false
     private var buffer: [TimedPoint] = []
     private var pendingEnd: DispatchWorkItem?
