@@ -5,15 +5,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var eventMonitor:     MouseEventMonitor?
     private var shakeDetector:    ShakeDetector?
 
-    func applicationWillFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.prohibited)
-    }
-
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard AXIsProcessTrusted() else {
             showAccessibilityAlert()
             return
         }
+        NSApp.setActivationPolicy(.prohibited)
         start()
     }
 
@@ -46,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showAccessibilityAlert() {
+        NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
         alert.messageText     = "アクセシビリティ権限が必要です"
         alert.informativeText = """
