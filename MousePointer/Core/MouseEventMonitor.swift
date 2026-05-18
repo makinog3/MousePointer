@@ -20,10 +20,11 @@ final class MouseEventMonitor {
             options: .listenOnly,
             eventsOfInterest: mask,
             callback: { _, type, event, refcon -> Unmanaged<CGEvent>? in
+                guard let ptr = refcon else { return nil }
                 let m = Unmanaged<MouseEventMonitor>
-                    .fromOpaque(refcon!).takeUnretainedValue()
+                    .fromOpaque(ptr).takeUnretainedValue()
                 m.handle(type: type, event: event)
-                return Unmanaged.passRetained(event)
+                return nil  // listen-only: return value is ignored by the system
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         )
@@ -41,6 +42,8 @@ final class MouseEventMonitor {
         }
         eventTap = nil
         runLoopSource = nil
+        onMouseMoved = nil
+        onMouseDown = nil
     }
 
     private func handle(type: CGEventType, event: CGEvent) {
