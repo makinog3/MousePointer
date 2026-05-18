@@ -40,15 +40,27 @@ final class ShakeDetector {
         let recent = buffer.filter { now - $0.timestamp <= Self.windowDuration }
         guard recent.count >= 4 else { return false }
 
+        // Measure per-swing distance (cumulative movement per direction), not
+        // per-event delta. At 60 Hz the per-event delta is only a few points
+        // even during a fast shake, so individual steps never hit minDistance.
         var reversals = 0
-        var prevSign: Int? = nil
+        var swingStartX = recent[0].point.x
+        var currentDir  = 0  // 0 = undetermined, +1 = right, -1 = left
 
         for i in 1..<recent.count {
-            let dx = recent[i].point.x - recent[i-1].point.x
-            guard abs(dx) >= Self.minDistance else { continue }
-            let sign = dx > 0 ? 1 : -1
-            if let prev = prevSign, prev != sign { reversals += 1 }
-            prevSign = sign
+            let dx = recent[i].point.x - recent[i - 1].point.x
+            guard dx != 0 else { continue }
+            let dir = dx > 0 ? 1 : -1
+
+            if currentDir == 0 {
+                currentDir = dir
+            } else if dir != currentDir {
+                if abs(recent[i - 1].point.x - swingStartX) >= Self.minDistance {
+                    reversals += 1
+                    swingStartX = recent[i - 1].point.x
+                }
+                currentDir = dir
+            }
         }
 
         return reversals >= Self.requiredReversals
